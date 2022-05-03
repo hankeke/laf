@@ -1,6 +1,6 @@
 {
   "name": "app-console",
-  "version": "0.7.11",
+  "version": "0.8.0-alpha.0",
   "description": "app-console in lay.js",
   "author": "Maslow <wangfugen@126.com>",
   "private": true,
@@ -20,6 +20,7 @@
     "axios": "^0.21.1",
     "bson": "^4.5.3",
     "clipboard": "2.0.4",
+    "dayjs": "^1.11.1",
     "element-ui": "2.13.2",
     "file-saver": "2.0.1",
     "js-cookie": "2.2.0",
