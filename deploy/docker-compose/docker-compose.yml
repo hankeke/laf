@@ -2,6 +2,7 @@ version: '3.8'
 services:
   mongo:
     image: bitnami/mongodb:5.0.8
+    # image: bitnami/mongodb:4.4.13    # Use this version for Apple M1 Chip
     environment:
       - MONGODB_REPLICA_SET_MODE=primary
       - MONGODB_ADVERTISED_HOSTNAME=mongo
@@ -29,7 +30,7 @@ services:
       - MINIO_ETCD_ENDPOINTS=http://etcd:2379
       - MINIO_SKIP_CLIENT=yes
       - MINIO_REGION_NAME=cn-default
-      - MINIO_DOMAIN=oss.local-dev.host
+      - MINIO_DOMAIN=${OSS_DOMAIN}
     ports:
       - "9020:9000"
       - "9120:9001"
@@ -52,7 +53,7 @@ services:
       - laf_shared_network
 
   system-server:
-    image: lafyun/system-server:0.8.0-alpha.6
+    image: lafyun/system-server:0.8.0
     user: root
     working_dir: /app
     environment:
@@ -74,7 +75,7 @@ services:
       INIT_ROOT_ACCOUNT_PASSWORD: ${INIT_ROOT_ACCOUNT_PASSWORD:?err}
       SYSTEM_EXTENSION_APPID: ${SYSTEM_EXTENSION_APPID}
       APPID_LENGTH: 6
-    command: sh /app/start.sh
+    command: dockerize -wait tcp://mongo:27017 -wait http://oss:9001 -timeout 60s sh /app/start.sh
     depends_on:
       - mongo
     cap_drop:
@@ -102,7 +103,7 @@ services:
       - laf_shared_network
 
   instance-controller:
-    image: lafyun/instance-controller:0.8.0-alpha.2
+    image: lafyun/instance-controller:0.8.0
     user: root
     working_dir: /app
     environment:
@@ -129,12 +130,12 @@ services:
       - laf_shared_network
 
   system-client:
-    image: lafyun/system-client:0.8.0-alpha.7
+    image: lafyun/system-client:0.8.0
     networks:
       - laf_shared_network
 
   app-console:
-    image: lafyun/app-console:0.8.0-alpha.7
+    image: lafyun/app-console:0.8.0
     networks:
       - laf_shared_network
 

@@ -6,34 +6,31 @@
  */
 
 import * as assert from 'assert'
-import { CONST_DICTS } from '../constants'
-import { IApplicationData } from './application'
+import { Groups } from '../groups'
+import { getUserGroupsOfApplication, IApplicationData } from './application'
 
 /**
  * Check if a user have permission for application
  * @param uid the account id
- * @param permission the permission name
+ * @param action the permission name
  * @param app the application which checked for
  * @returns 0 means ok, 401 means unauthorized, 403 means permission denied
  */
-export async function checkPermission(uid: string, permission: string, app: IApplicationData): Promise<number> {
+export async function checkPermission(uid: string, action: string, app: IApplicationData): Promise<number> {
   if (!uid) return 401
-  assert.ok(permission, 'empty permission got')
+  assert.ok(action, 'empty permission got')
   assert.ok(app, 'empty app got')
 
   // pass directly while the app owner here
   if (uid === app.created_by.toHexString()) return 0
 
-  // reject while uid is not the collaborator
-  const [collaborator] = app.collaborators?.filter(co => co.uid.toHexString() === uid) ?? []
-  if (!collaborator) return 403
+  // reject if not the collaborator
+  const roles = getUserGroupsOfApplication(uid, app)
+  if (!roles.length) return 403
 
-  // reject while uid not have the permission
-  const roles = collaborator.roles
-  const permissions = getPermissionsOfRoles(roles)
-  if (!permissions.includes(permission)) {
-    return 403
-  }
+  // reject if not the permission
+  const actions = getActionsOfRoles(roles)
+  if (!actions.includes(action)) return 403
 
   return 0
 }
@@ -43,12 +40,13 @@ export async function checkPermission(uid: string, permission: string, app: IApp
  * @param roles_names The role names
  * @returns 
  */
-export function getPermissionsOfRoles(roles_names: string[]) {
-  const permissions = []
+export function getActionsOfRoles(roles_names: string[]) {
+  const rets = []
   for (const name of roles_names) {
-    const pns = CONST_DICTS.roles[name]?.permissions ?? []
-    permissions.push(...pns)
+    const role = Groups.find(it => it.name === name)
+    const actions = role?.actions ?? []
+    rets.push(...actions)
   }
 
-  return permissions.map(pn => pn.name)
+  return rets
 }

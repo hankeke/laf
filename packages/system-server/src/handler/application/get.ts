@@ -6,14 +6,13 @@
  */
 
 import { Request, Response } from 'express'
-import { getApplicationByAppid, getMyApplications, getMyJoinedApplications, getUserRolesOfApplication } from '../../support/application'
-import { getPermissionsOfRoles } from '../../support/permission'
-import { CONST_DICTS } from '../../constants'
+import { getApplicationByAppid, getMyApplications, getMyJoinedApplications, getUserGroupsOfApplication } from '../../support/application'
+import { getActionsOfRoles } from '../../support/permission'
 import { getToken } from '../../support/token'
 import Config from '../../config'
 import { ApplicationSpecSupport } from '../../support/application-spec'
+import { FunctionActionDef } from '../../actions'
 
-const { FUNCTION_DEBUG } = CONST_DICTS.permissions
 
 /**
  * The handler of getting my applications(created & joined)
@@ -51,18 +50,18 @@ export async function handleGetApplicationByAppid(req: Request, res: Response) {
     return res.status(422).send('invalid appid')
 
   // get user roles of the application
-  const roles = getUserRolesOfApplication(uid, app)
+  const roles = getUserGroupsOfApplication(uid, app)
   if (!roles.length) {
     return res.status(403).send()
   }
 
   // get user permissions of the application
-  const permissions = getPermissionsOfRoles(roles)
+  const permissions = getActionsOfRoles(roles)
 
   // generate token of debugging cloud function
   const exp = Math.floor(Date.now() / 1000) + 60 * 60 * Config.TOKEN_EXPIRED_TIME
   let debug_token = undefined
-  if (permissions.includes(FUNCTION_DEBUG.name)) {
+  if (permissions.includes(FunctionActionDef.InvokeFunction)) {
     debug_token = getToken({ appid, type: 'debug', exp }, app.config.server_secret_salt)
   }
 

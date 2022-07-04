@@ -10,12 +10,11 @@ import { Request, Response } from 'express'
 import { IApplicationData } from '../../support/application'
 import { checkPermission } from '../../support/permission'
 import { CN_FUNCTIONS } from '../../constants'
-import { permissions } from '../../permissions'
+import { FunctionActionDef } from '../../actions'
 import { DatabaseAgent } from '../../db'
 import { hashFunctionCode } from '../../support/util-passwd'
 import { compileTs2js } from '../../support/util-lang'
 
-const { FUNCTION_ADD } = permissions
 
 /**
  * Create function
@@ -26,7 +25,7 @@ export async function handleCreateFunction(req: Request, res: Response) {
   const app: IApplicationData = req['parsed-app']
 
   // check permission
-  const code = await checkPermission(uid, FUNCTION_ADD.name, app)
+  const code = await checkPermission(uid, FunctionActionDef.CreateFunction, app)
   if (code) {
     return res.status(code).send()
   }
@@ -35,6 +34,10 @@ export async function handleCreateFunction(req: Request, res: Response) {
   const body = req.body
   if (!body.name) return res.status(422).send('name cannot be empty')
   if (!body.code) return res.status(422).send('code cannot be empty')
+  if (!body.label) return res.status(422).send('label cannot be empty')
+  //check label
+  const namePattern = /^[a-zA-Z0-9_\-]+$/
+  if (!namePattern.test(body.name)) return res.status(422).send('函数标识只能含字母、数字、下划线及中划线')
 
   // function name should be unique
   const total = await db.collection(CN_FUNCTIONS)
@@ -52,7 +55,7 @@ export async function handleCreateFunction(req: Request, res: Response) {
     compiledCode: compileTs2js(body.code),
     tags: body.tags ?? [],
     triggers: [],
-    label: body.label ?? 'New Function',
+    label: body.label,
     version: 0,
     hash: hashFunctionCode(body.code),
     created_at: new Date(),

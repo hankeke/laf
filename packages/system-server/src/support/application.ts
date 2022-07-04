@@ -5,7 +5,7 @@
  * @Description: Application APIs
  */
 
-import { CN_APPLICATIONS, CN_APP_SPECS, CN_PUBLISHED_CONFIG, CONST_DICTS } from "../constants"
+import { CN_APPLICATIONS, CN_APP_SPECS, CN_PUBLISHED_CONFIG } from "../constants"
 import { DatabaseAgent } from "../db"
 import * as assert from 'assert'
 import { MongoAccessor } from "database-proxy"
@@ -15,6 +15,7 @@ import * as mongodb_uri from 'mongodb-uri'
 import { logger } from "./logger"
 import { BUCKET_ACL } from "./minio"
 import { customAlphabet } from 'nanoid'
+import { Admin } from "../groups"
 
 /**
  * Status of application instance
@@ -57,11 +58,6 @@ export interface IApplicationData {
     db_password: string
     server_secret_salt: string
     oss_access_secret: string
-    file_system_driver?: string
-    file_system_enable_unauthorized_upload?: string
-    file_system_http_cache_control?: string
-    log_level?: string
-    enable_cloud_function_log?: string
   }
   runtime: {
     image: string
@@ -195,9 +191,9 @@ export async function getApplicationDbAccessor(app: IApplicationData) {
  * @param app 
  * @returns 
  */
-export function getUserRolesOfApplication(uid: string, app: IApplicationData) {
+export function getUserGroupsOfApplication(uid: string, app: IApplicationData) {
   if (app.created_by.toHexString() === uid) {
-    return [CONST_DICTS.roles.owner.name]
+    return [Admin.name]
   }
 
   // reject if not the collaborator
